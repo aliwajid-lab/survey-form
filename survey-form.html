@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SURVEY FORM - BMI & Low Back Pain Study</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            padding: 10px;
+            font-size: 15px;
+        }
+        .container { max-width: 800px; margin: 0 auto 40px; }
+        .header {
+            background: linear-gradient(135deg, #1a237e, #283593);
+            color: #fff;
+            border-radius: 12px 12px 0 0;
+            padding: 24px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 20px; margin-bottom: 6px; }
+        .header p { font-size: 12px; opacity: 0.85; line-height: 1.5; }
+
+        .admin-bar {
+            background: #fff;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .admin-bar .count { font-size: 13px; color: #666; }
+        .admin-bar .count strong { color: #1a237e; }
+        .admin-bar .btn-sm {
+            background: #1a237e; color: #fff; border: none; border-radius: 6px;
+            padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px;
+        }
+        .admin-bar .btn-sm:active { background: #283593; }
+        .admin-bar .btn-sm.danger { background: #c62828; }
+        .admin-bar .btn-sm.danger:active { background: #d32f2f; }
+
+        .bmi-card {
+            background: #e8eaf6;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .bmi-card .title { font-weight: 700; color: #1a237e; font-size: 15px; margin-bottom: 10px; }
+        .bmi-card .inputs { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        .bmi-card .field { flex: 1; min-width: 100px; }
+        .bmi-card label { font-size: 13px; font-weight: 600; color: #333; display: block; margin-bottom: 3px; }
+        .bmi-card input {
+            width: 100%; padding: 10px; border: 2px solid #c5cae9;
+            border-radius: 6px; font-size: 15px; outline: none; min-height: 44px;
+        }
+        .bmi-card input:focus { border-color: #1a237e; }
+        .bmi-card .calc-btn {
+            background: #1a237e; color: #fff; border: none; min-height: 44px;
+            padding: 0 24px; border-radius: 6px; font-size: 15px; font-weight: 600;
+            cursor: pointer; white-space: nowrap;
+        }
+        .bmi-card .calc-btn:active { background: #3949ab; }
+        .bmi-result {
+            display: none; padding: 10px 16px; border-radius: 8px;
+            font-weight: 700; font-size: 14px; margin-top: 10px; text-align: center;
+        }
+        .bmi-result.show { display: block; }
+        .bmi-result.underweight { background: #fff3cd; color: #856404; }
+        .bmi-result.normal { background: #d4edda; color: #155724; }
+        .bmi-result.overweight { background: #ffeeba; color: #856404; }
+        .bmi-result.obese { background: #f8d7da; color: #721c24; }
+
+        .section {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .section-title {
+            font-size: 17px; font-weight: 700; color: #1a237e;
+            border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; margin-bottom: 14px;
+        }
+        .section-desc { font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.5; }
+        .info-box {
+            background: #f5f5f5; padding: 12px 14px; border-radius: 8px;
+            font-size: 13px; color: #444; line-height: 1.6; margin-bottom: 14px;
+            border-left: 4px solid #1a237e;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 5px;
+        }
+        .form-group .required { color: #d32f2f; }
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="number"],
+        .form-group select {
+            width: 100%; padding: 10px 12px; border: 2px solid #ddd;
+            border-radius: 6px; font-size: 15px; outline: none; transition: border-color 0.3s;
+            min-height: 44px; background: #fff;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #1a237e; }
+        .radio-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+        .radio-group label {
+            font-weight: 400; font-size: 15px; cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            min-height: 44px; padding: 0 12px 0 6px;
+            border: 2px solid #e0e0e0; border-radius: 8px;
+        }
+        .radio-group label:active { background: #f5f5f5; }
+        .radio-group input[type="radio"] { width: 18px; height: 18px; cursor: pointer; }
+
+        .grid-questions { display: flex; flex-direction: column; gap: 0; }
+        .grid-questions .q-row {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 12px 8px; border-bottom: 1px solid #f0f0f0;
+        }
+        .grid-questions .q-row .q-text { flex: 1; font-size: 14px; line-height: 1.4; padding-top: 3px; }
+        .grid-questions .q-row .q-opts { display: flex; gap: 6px; flex-shrink: 0; }
+        .grid-questions .q-row .q-opts label {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            font-size: 12px; font-weight: 600; color: #555; cursor: pointer;
+            min-width: 48px; padding: 6px 4px;
+            border: 2px solid #e0e0e0; border-radius: 8px;
+        }
+        .grid-questions .q-row .q-opts label:active { background: #f5f5f5; }
+        .grid-questions .q-row .q-opts input[type="radio"] { width: 20px; height: 20px; cursor: pointer; }
+        .grid-questions .q-row .q-opts label:has(input:checked) {
+            border-color: #1a237e; background: #e8eaf6; color: #1a237e;
+        }
+
+        .btn-submit {
+            display: block; width: 100%; min-height: 48px;
+            background: #2e7d32; color: #fff; border: none; border-radius: 8px;
+            font-size: 17px; font-weight: 700; cursor: pointer; padding: 10px;
+        }
+        .btn-submit:active { background: #388e3c; }
+
+        .success-msg {
+            display: none; background: #d4edda; color: #155724;
+            padding: 14px 18px; border-radius: 8px; text-align: center;
+            font-weight: 600; font-size: 15px; margin-top: 12px;
+        }
+        .success-msg.show { display: block; }
+
+        .table-container { overflow-x: auto; }
+        .grid-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+        .grid-table th {
+            background: #e8eaf6; padding: 10px 12px; font-size: 13px;
+            font-weight: 600; color: #1a237e; text-align: center; border: 1px solid #c5cae9;
+        }
+        .grid-table td { padding: 10px 12px; border: 1px solid #e0e0e0; font-size: 13px; }
+        .grid-table td:first-child { font-weight: 500; }
+        .grid-table td.radio-cell { text-align: center; }
+        .grid-table input[type="radio"] { width: 18px; height: 18px; cursor: pointer; }
+
+        .login-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); display: flex; align-items: center;
+            justify-content: center; z-index: 1000; padding: 20px;
+        }
+        .login-box {
+            background: #fff; border-radius: 12px; padding: 30px; max-width: 360px;
+            width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-box h2 { font-size: 18px; color: #1a237e; margin-bottom: 6px; }
+        .login-box p { font-size: 13px; color: #666; margin-bottom: 18px; }
+        .login-box input {
+            width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px;
+            font-size: 15px; outline: none; margin-bottom: 12px; text-align: center;
+        }
+        .login-box input:focus { border-color: #1a237e; }
+        .login-box button {
+            width: 100%; padding: 12px; background: #1a237e; color: #fff;
+            border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer;
+        }
+        .login-box button:active { background: #283593; }
+        .login-box .error { color: #c62828; font-size: 13px; margin-top: 8px; display: none; }
+
+        .admin-login-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #1a237e; color: #fff; border: none; border-radius: 50%;
+            width: 48px; height: 48px; font-size: 20px; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .admin-login-btn:active { background: #283593; }
+
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .chart-box {
+            background: #fff; border-radius: 10px; padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .chart-box h3 { font-size: 14px; color: #1a237e; margin-bottom: 10px; text-align: center; }
+        .chart-box canvas { max-height: 220px; }
+
+        .admin-section { display: none; }
+        .student-section { display: block; }
+
+        @media (max-width: 640px) {
+            body { padding: 6px; }
+            .header { border-radius: 8px 8px 0 0; padding: 18px 14px; }
+            .header h1 { font-size: 17px; }
+            .header p { font-size: 11px; }
+            .section { padding: 14px 12px; border-radius: 8px; }
+            .section-title { font-size: 15px; }
+            .bmi-card { padding: 12px; }
+            .bmi-card .inputs { gap: 8px; }
+            .bmi-card .field { min-width: 80px; }
+            .bmi-card input { padding: 8px; font-size: 14px; min-height: 40px; }
+            .bmi-card .calc-btn { min-height: 40px; padding: 0 16px; font-size: 14px; }
+            .form-group { margin-bottom: 14px; }
+            .form-group input, .form-group select { min-height: 40px; font-size: 14px; }
+            .radio-group { gap: 8px; }
+            .radio-group label { min-height: 40px; font-size: 14px; padding: 0 10px 0 4px; }
+            .grid-questions .q-row { padding: 10px 6px; gap: 6px; }
+            .grid-questions .q-row .q-text { font-size: 13px; }
+            .grid-questions .q-row .q-opts label { min-width: 42px; padding: 4px; font-size: 11px; }
+            .grid-questions .q-row .q-opts input[type="radio"] { width: 18px; height: 18px; }
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .grid-table { display: none; }
+            .grid-questions { display: flex; }
+        }
+        @media (min-width: 641px) {
+            .grid-table { display: table; }
+            .grid-questions { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-login-btn" id="adminToggle" onclick="toggleAdmin()" title="Admin">&#9881;</div>
+
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <h2>Admin Access</h2>
+        <p>Enter master password to view responses and analytics.</p>
+        <input type="password" id="pwdInput" placeholder="Password" onkeydown="if(event.key==='Enter')adminLogin()">
+        <button onclick="adminLogin()">Login</button>
+        <div class="error" id="loginError">Incorrect password</div>
+    </div>
+</div>
+
+<div class="container" id="mainContainer">
+    <div class="header">
+        <h1>SURVEY FORM</h1>
+        <p>Role of Body Mass Index (BMI) in the Development of Low Back Pain Among Students:<br>
+        Focus on Functional Disability and Risk in Female Students</p>
+    </div>
+
+    <!-- STUDENT VIEW (default) -->
+    <div class="student-section" id="studentView">
+        <div id="formArea">
+            <!-- SECTION A -->
+            <div class="section">
+                <div class="section-title">Section A — Personal Information</div>
+                <div class="info-box">This survey is being conducted to evaluate the relationship between <strong>Body Mass Index (BMI)</strong> and the development of <strong>low back pain</strong> among students, with special focus on functional disability and associated risk factors in female students. All information provided will remain confidential and will only be used for research purposes.</div>
+
+                <div class="form-group">
+                    <label>Email <span class="required">*</span></label>
+                    <input type="email" id="email" required inputmode="email" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label>Name <span class="required">*</span></label>
+                    <input type="text" id="name" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label>Age <span class="required">*</span></label>
+                    <input type="number" id="age" min="1" max="120" required inputmode="numeric">
+                </div>
+                <div class="form-group">
+                    <label>Gender <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="gender" value="Male" required> Male</label>
+                        <label><input type="radio" name="gender" value="Female"> Female</label>
+                        <label><input type="radio" name="gender" value="Other"> Other</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Department / Program <span class="required">*</span></label>
+                    <input type="text" id="department" required>
+                </div>
+                <div class="form-group">
+                    <label>Academic Year <span class="required">*</span></label>
+                    <input type="text" id="academicYear" required>
+                </div>
+                <div class="form-group">
+                    <label>Height (cm) <span class="required">*</span></label>
+                    <input type="number" id="height" min="50" max="300" step="0.1" required inputmode="decimal" oninput="autoCalcBMI()">
+                </div>
+                <div class="form-group">
+                    <label>Weight (kg) <span class="required">*</span></label>
+                    <input type="number" id="weight" min="10" max="300" step="0.1" required inputmode="decimal" oninput="autoCalcBMI()">
+                </div>
+                <div class="form-group">
+                    <label>Marital Status <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="marital" value="Single" required> Single</label>
+                        <label><input type="radio" name="marital" value="Married"> Married</label>
+                        <label><input type="radio" name="marital" value="Other"> Other</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION B -->
+            <div class="section">
+                <div class="section-title">SECTION B — Lifestyle and Risk Factors</div>
+                <div class="section-desc">Please tick (&#10003;) the appropriate answer.</div>
+                <div class="table-container">
+                    <table class="grid-table">
+                        <thead><tr><th style="text-align:left">Question</th><th>Yes</th><th>No</th></tr></thead>
+                        <tbody>
+                            <tr><td>1. Do you experience low back pain?</td>
+                                <td class="radio-cell"><input type="radio" name="b1" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b1" value="No"></td></tr>
+                            <tr><td>2. Have you experienced low back pain during the last 12 months?</td>
+                                <td class="radio-cell"><input type="radio" name="b2" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b2" value="No"></td></tr>
+                            <tr><td>3. Do you sit continuously for more than 4 hours daily?</td>
+                                <td class="radio-cell"><input type="radio" name="b3" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b3" value="No"></td></tr>
+                            <tr><td>4. Do you use laptops/mobile devices for prolonged periods?</td>
+                                <td class="radio-cell"><input type="radio" name="b4" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b4" value="No"></td></tr>
+                            <tr><td>5. Do you participate in regular physical activity/exercise?</td>
+                                <td class="radio-cell"><input type="radio" name="b5" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b5" value="No"></td></tr>
+                            <tr><td>6. Do you carry heavy backpacks regularly?</td>
+                                <td class="radio-cell"><input type="radio" name="b6" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b6" value="No"></td></tr>
+                            <tr><td>7. Do you feel stress related to academic workload?</td>
+                                <td class="radio-cell"><input type="radio" name="b7" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b7" value="No"></td></tr>
+                            <tr><td>8. Do you have a family history of low back pain?</td>
+                                <td class="radio-cell"><input type="radio" name="b8" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b8" value="No"></td></tr>
+                            <tr><td>9. Does low back pain affect your academic performance?</td>
+                                <td class="radio-cell"><input type="radio" name="b9" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b9" value="No"></td></tr>
+                            <tr><td>10. Have you sought medical treatment for low back pain?</td>
+                                <td class="radio-cell"><input type="radio" name="b10" value="Yes" required></td>
+                                <td class="radio-cell"><input type="radio" name="b10" value="No"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="grid-questions">
+                    <div class="q-row"><div class="q-text">1. Do you experience low back pain?</div>
+                        <div class="q-opts"><label><input type="radio" name="b1m" value="Yes" required> Yes</label><label><input type="radio" name="b1m" value="No"> No</label></div></div>
+                    <div class="q-row"><div class="q-text">2. Experienced low back pain during last 12 months?</div>
+                        <div class="q-opts"><label><input type="radio" name="b2m" value="Yes" required> Yes</label><label><input type="radio" name="b2m" value="No"> No</label></div></div>
+                    <div class="q-row"><div class="q-text">3. Do you sit continuously for more than 4 hours daily?</div>
+                        <div class="q-opts"><label><input type="radio" name="b3m" value="Yes" required> Yes</label><label><input type="radio" name="b3m" value="No"> No</label></div></div>
+                    <div class="q-row"><div class="q-text">4. Do you use laptops/mobile devices for prolonged periods?</div>
+                        <div class="q-opts"><label><input type="radio" name="b4m" value="Yes" required> Yes</label><label><input type="radio" name="b4m" value="No"> No</label></div></div>
+                    <div class="q-row"><div class="q-text">5. Do you participate in regular physical activity/exercise?</div>
+                        <div class="q-opts"><label><input type="radio" name="b5m" value="Yes" required> Yes</label><label><input type="radio" name="b5m" value="No"> No</label></div></div>
+                    <div class="q-row"><div class="q-text">6. Do you carry heavy backpacks regularly?</div>
+                        <div class="q-opts"><label><input type="radio" name="b6m" value="Yes" required> Yes</label><label><input type="radio" name="b6m" value="No"> No</label></div></div>
+                    <div class="q-row"><div class="q-text">7. Do you feel stress related to academic workload?</div>
+                        <div class="q-opts"><label><input type="radio" name="b7m" value="Yes" required> Yes</label><label><input type="radio" name="b7m" value="No"> No</label></div></div>
+                    <div class="q-row"><div class="q-text">8. Do you have a family history of low back pain?</div>
+                        <div class="q-opts"><label><input type="radio" name="b8m" value="Yes" required> Yes</label><label><input type="radio" name="b8m" value="No"> No</label></div></div>
+                    <div class="q-row"><div class="q-text">9. Does low back pain affect your academic performance?</div>
+                        <div class="q-opts"><label><input type="radio" name="b9m" value="Yes" required> Yes</label><label><input type="radio" name="b9m" value="No"> No</label></div></div>
+                    <div class="q-row"><div class="q-text">10. Have you sought medical treatment for low back pain?</div>
+                        <div class="q-opts"><label><input type="radio" name="b10m" value="Yes" required> Yes</label><label><input type="radio" name="b10m" value="No"> No</label></div></div>
+                </div>
+            </div>
+
+            <!-- SECTION C -->
+            <div class="section">
+                <div class="section-title">SECTION C — Pain Characteristics</div>
+                <div class="form-group"><label>1. Duration of Low Back Pain <span class="required">*</span></label>
+                    <select id="c1" required>
+                        <option value="">-- Select --</option>
+                        <option value="Less than 1 month">Less than 1 month</option>
+                        <option value="1-3 months">1–3 months</option>
+                        <option value="3-6 months">3–6 months</option>
+                        <option value="More than 6 months">More than 6 months</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>2. Frequency of Pain <span class="required">*</span></label>
+                    <select id="c2" required>
+                        <option value="">-- Select --</option>
+                        <option value="Rarely">Rarely</option>
+                        <option value="Occasionally">Occasionally</option>
+                        <option value="Frequently">Frequently</option>
+                        <option value="Daily">Daily</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>3. Pain Severity <span class="required">*</span></label>
+                    <select id="c3" required>
+                        <option value="">-- Select --</option>
+                        <option value="Mild">Mild</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Severe">Severe</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>4. Pain Radiation <span class="required">*</span></label>
+                    <select id="c4" required>
+                        <option value="">-- Select --</option>
+                        <option value="Pain remains in lower back only">Pain remains in lower back only</option>
+                        <option value="Pain radiates to hips">Pain radiates to hips</option>
+                        <option value="Pain radiates to legs">Pain radiates to legs</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- SECTION D -->
+            <div class="section">
+                <div class="section-title">SECTION D — Functional Disability Assessment</div>
+                <div class="section-desc"><strong>Oswestry Disability Index (ODI) Version 2.1a</strong></div>
+                <div class="info-box">Please select <strong>ONE</strong> statement in each section that best describes your condition today.</div>
+
+                <div class="form-group"><label>D1. Pain Intensity <span class="required">*</span></label>
+                    <select id="d1" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="I have no pain at the moment.">I have no pain at the moment.</option>
+                        <option value="The pain is very mild at the moment.">The pain is very mild at the moment.</option>
+                        <option value="The pain is moderate at the moment.">The pain is moderate at the moment.</option>
+                        <option value="The pain is fairly severe at the moment.">The pain is fairly severe at the moment.</option>
+                        <option value="The pain is very severe at the moment.">The pain is very severe at the moment.</option>
+                        <option value="The pain is the worst imaginable.">The pain is the worst imaginable.</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>D2. Personal Care <span class="required">*</span></label>
+                    <select id="d2" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="I can look after myself normally without causing extra pain.">I can look after myself normally without causing extra pain.</option>
+                        <option value="I can look after myself normally, but it causes extra pain.">I can look after myself normally, but it causes extra pain.</option>
+                        <option value="It is painful to look after myself, and I am slow and careful.">It is painful to look after myself, and I am slow and careful.</option>
+                        <option value="I need some help but manage most of my personal care.">I need some help but manage most of my personal care.</option>
+                        <option value="I need help every day in most aspects of personal care.">I need help every day in most aspects of personal care.</option>
+                        <option value="I do not get dressed, I wash with difficulty, and stay in bed.">I do not get dressed, I wash with difficulty, and stay in bed.</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>D3. Lifting <span class="required">*</span></label>
+                    <select id="d3" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="I can lift heavy weights without extra pain.">I can lift heavy weights without extra pain.</option>
+                        <option value="I can lift heavy weights but it causes extra pain.">I can lift heavy weights but it causes extra pain.</option>
+                        <option value="Pain prevents me from lifting heavy weights off the floor, but I can manage if placed on a table.">Pain prevents me from lifting heavy weights off the floor, but I can manage if placed on a table.</option>
+                        <option value="I can lift only very light weights.">I can lift only very light weights.</option>
+                        <option value="I cannot lift or carry anything at all.">I cannot lift or carry anything at all.</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>D4. Walking <span class="required">*</span></label>
+                    <select id="d4" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="Pain does not prevent me from walking any distance.">Pain does not prevent me from walking any distance.</option>
+                        <option value="Pain prevents me from walking more than 1 mile.">Pain prevents me from walking more than 1 mile.</option>
+                        <option value="Pain prevents me from walking more than 1/2 mile.">Pain prevents me from walking more than 1/2 mile.</option>
+                        <option value="Pain prevents me from walking more than 1/4 mile.">Pain prevents me from walking more than 1/4 mile.</option>
+                        <option value="I can walk only with a cane or crutches.">I can walk only with a cane or crutches.</option>
+                        <option value="I am in bed most of the time; I cannot walk at all.">I am in bed most of the time; I cannot walk at all.</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>D5. Sitting <span class="required">*</span></label>
+                    <select id="d5" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="I can sit in any chair as long as I like.">I can sit in any chair as long as I like.</option>
+                        <option value="I can only sit in my favorite chair as long as I like.">I can only sit in my favorite chair as long as I like.</option>
+                        <option value="Pain prevents me from sitting more than 1 hour.">Pain prevents me from sitting more than 1 hour.</option>
+                        <option value="Pain prevents me from sitting more than 30 minutes.">Pain prevents me from sitting more than 30 minutes.</option>
+                        <option value="Pain prevents me from sitting more than 10 minutes.">Pain prevents me from sitting more than 10 minutes.</option>
+                        <option value="I avoid sitting because it increases my pain immediately.">I avoid sitting because it increases my pain immediately.</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>D6. Standing <span class="required">*</span></label>
+                    <select id="d6" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="I can stand as long as I want without pain.">I can stand as long as I want without pain.</option>
+                        <option value="I can stand as long as I want, but it causes extra pain.">I can stand as long as I want, but it causes extra pain.</option>
+                        <option value="Pain prevents me from standing more than 1 hour.">Pain prevents me from standing more than 1 hour.</option>
+                        <option value="Pain prevents me from standing more than 30 minutes.">Pain prevents me from standing more than 30 minutes.</option>
+                        <option value="Pain prevents me from standing more than 10 minutes.">Pain prevents me from standing more than 10 minutes.</option>
+                        <option value="Pain prevents me from standing at all.">Pain prevents me from standing at all.</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>D7. Sleeping <span class="required">*</span></label>
+                    <select id="d7" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="My sleep is never disturbed by pain.">My sleep is never disturbed by pain.</option>
+                        <option value="My sleep is occasionally disturbed by pain.">My sleep is occasionally disturbed by pain.</option>
+                        <option value="Because of pain, I have less than 6 hours sleep.">Because of pain, I have less than 6 hours sleep.</option>
+                        <option value="Because of pain, I have less than 4 hours sleep.">Because of pain, I have less than 4 hours sleep.</option>
+                        <option value="Because of pain, I have less than 2 hours sleep.">Because of pain, I have less than 2 hours sleep.</option>
+                        <option value="Pain prevents me from sleeping at all.">Pain prevents me from sleeping at all.</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>D8. Social Life <span class="required">*</span></label>
+                    <select id="d8" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="My social life is normal and does not increase my pain.">My social life is normal and does not increase my pain.</option>
+                        <option value="My social life is normal, but it increases my pain.">My social life is normal, but it increases my pain.</option>
+                        <option value="Pain has no significant effect, but I avoid more energetic activities.">Pain has no significant effect, but I avoid more energetic activities.</option>
+                        <option value="Pain has restricted my social life, and I do not go out as often.">Pain has restricted my social life, and I do not go out as often.</option>
+                        <option value="Pain has restricted my social life to my home.">Pain has restricted my social life to my home.</option>
+                        <option value="I have no social life because of pain.">I have no social life because of pain.</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>D9. Traveling <span class="required">*</span></label>
+                    <select id="d9" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="I can travel anywhere without pain.">I can travel anywhere without pain.</option>
+                        <option value="I can travel anywhere, but it causes extra pain.">I can travel anywhere, but it causes extra pain.</option>
+                        <option value="Pain is bad, but I manage journeys over 2 hours.">Pain is bad, but I manage journeys over 2 hours.</option>
+                        <option value="Pain restricts me to journeys of less than 1 hour.">Pain restricts me to journeys of less than 1 hour.</option>
+                        <option value="Pain restricts me to short necessary journeys only.">Pain restricts me to short necessary journeys only.</option>
+                        <option value="Pain prevents me from traveling except to the doctor or hospital.">Pain prevents me from traveling except to the doctor or hospital.</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>D10. Employment / Homemaking <span class="required">*</span></label>
+                    <select id="d10" required onchange="calcODI()">
+                        <option value="">-- Select --</option>
+                        <option value="My normal work/homemaking does not cause pain.">My normal work/homemaking does not cause pain.</option>
+                        <option value="My normal work/homemaking causes extra pain, but I can do it.">My normal work/homemaking causes extra pain, but I can do it.</option>
+                        <option value="I can do most of my normal work/homemaking, but pain prevents some tasks.">I can do most of my normal work/homemaking, but pain prevents some tasks.</option>
+                        <option value="Pain prevents me from doing manual work, but I can manage light duties.">Pain prevents me from doing manual work, but I can manage light duties.</option>
+                        <option value="Pain prevents me from doing most work/homemaking duties.">Pain prevents me from doing most work/homemaking duties.</option>
+                        <option value="I cannot do any work/homemaking tasks at all.">I cannot do any work/homemaking tasks at all.</option>
+                    </select>
+                </div>
+
+                <div id="odiResult" style="display:none;margin-top:14px;padding:14px;background:#e8eaf6;border-radius:8px;text-align:center;">
+                    <div style="font-size:13px;color:#555;font-weight:600;">Oswestry Disability Index (ODI) Score</div>
+                    <div style="font-size:28px;font-weight:700;color:#1a237e;margin:4px 0;" id="odiScore">0%</div>
+                    <div style="font-size:15px;font-weight:600;padding:6px 12px;border-radius:16px;display:inline-block;" id="odiCategory">—</div>
+                </div>
+            </div>
+
+            <!-- SECTION E -->
+            <div class="section">
+                <div class="section-title">SECTION E — Researcher Scoring Sheet</div>
+
+                <div class="bmi-card" style="margin-bottom:16px;">
+                    <div class="title">BMI Calculator</div>
+                    <div class="inputs">
+                        <div class="field">
+                            <label for="bmiHt">Height (cm)</label>
+                            <input type="number" id="bmiHt" placeholder="e.g. 165" min="50" max="300" step="0.1" inputmode="decimal">
+                        </div>
+                        <div class="field">
+                            <label for="bmiWt">Weight (kg)</label>
+                            <input type="number" id="bmiWt" placeholder="e.g. 65" min="10" max="300" step="0.1" inputmode="decimal">
+                        </div>
+                        <button class="calc-btn" onclick="calculateBMI()">Calculate</button>
+                    </div>
+                    <div class="bmi-result" id="bmiResult"></div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <div style="font-weight:700;color:#1a237e;font-size:14px;margin-bottom:8px;">BMI Classification</div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead><tr style="background:#e8eaf6;">
+                                <th style="padding:8px 12px;border:1px solid #c5cae9;font-size:13px;text-align:center;">BMI Range</th>
+                                <th style="padding:8px 12px;border:1px solid #c5cae9;font-size:13px;text-align:center;">Classification</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr><td style="padding:8px 12px;border:1px solid #e0e0e0;font-size:13px;text-align:center;">&lt; 18.5</td><td style="padding:8px 12px;border:1px solid #e0e0e0;font-size:13px;text-align:center;background:#fff3cd;">Underweight</td></tr>
+                                <tr><td style="padding:8px 12px;border:1px solid #e0e0e0;font-size:13px;text-align:center;">18.5 – 24.9</td><td style="padding:8px 12px;border:1px solid #e0e0e0;font-size:13px;text-align:center;background:#d4edda;">Normal</td></tr>
+                                <tr><td style="padding:8px 12px;border:1px solid #e0e0e0;font-size:13px;text-align:center;">25 – 29.9</td><td style="padding:8px 12px;border:1px solid #e0e0e0;font-size:13px;text-align:center;background:#ffeeba;">Overweight</td></tr>
+                                <tr><td style="padding:8px 12px;border:1px solid #e0e0e0;font-size:13px;text-align:center;">&ge; 30</td><td style="padding:8px 12px;border:1px solid #e0e0e0;font-size:13px;text-align:center;background:#f8d7da;">Obese</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>ODI Interpretation <span class="required">*</span></label>
+                    <select id="odiInterpretation" required>
+                        <option value="">-- Select --</option>
+                        <option value="Minimal Disability (0-20%)">Minimal Disability (0–20%)</option>
+                        <option value="Moderate Disability (21-40%)">Moderate Disability (21–40%)</option>
+                        <option value="Severe Disability (41-60%)">Severe Disability (41–60%)</option>
+                        <option value="Crippled (61-80%)">Crippled (61–80%)</option>
+                        <option value="Bed-bound (81-100%)">Bed-bound (81–100%)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-submit" onclick="submitForm()">Submit Survey</button>
+            <div class="success-msg" id="successMsg">Response submitted successfully! Thank you.</div>
+        </div>
+    </div>
+
+    <!-- ADMIN VIEW (hidden by default) -->
+    <div class="admin-section" id="adminView">
+        <div class="admin-bar">
+            <span class="count">Total Submissions: <strong id="subCount">0</strong></span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn-sm" onclick="downloadExcel()">Download Excel</button>
+                <button class="btn-sm" onclick="clearAllData()">Clear All</button>
+                <button class="btn-sm danger" onclick="logoutAdmin()">Logout</button>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-box">
+                <h3>BMI Distribution</h3>
+                <canvas id="chartBMI"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>ODI Interpretation</h3>
+                <canvas id="chartODI"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>Gender Distribution</h3>
+                <canvas id="chartGender"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>Low Back Pain Prevalence</h3>
+                <canvas id="chartLBP"></canvas>
+            </div>
+        </div>
+
+        <div class="section" style="margin-top:16px;">
+            <div class="section-title">All Responses</div>
+            <div style="overflow-x:auto;" id="responsesTable"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var ADMIN_PWD = 'admin123';
+    var isAdmin = false;
+    var chartInstances = {};
+
+    var odiIds = ['d1','d2','d3','d4','d5','d6','d7','d8','d9','d10'];
+
+    function getODIScore(id) {
+        var el = document.getElementById(id);
+        if (!el.value) return -1;
+        return el.selectedIndex - 1;
+    }
+
+    function calcODI() {
+        var total = 0, answered = 0;
+        for (var i = 0; i < odiIds.length; i++) {
+            var s = getODIScore(odiIds[i]);
+            if (s >= 0) { total += s; answered++; }
+        }
+        var el = document.getElementById('odiResult');
+        var scoreEl = document.getElementById('odiScore');
+        var catEl = document.getElementById('odiCategory');
+        if (answered < 10) { el.style.display = 'none'; return; }
+        var pct = Math.round((total / 50) * 100);
+        scoreEl.textContent = total + '/50 (' + pct + '%)';
+        var cat, bg;
+        if (pct <= 20) { cat = 'Minimal Disability'; bg = '#d4edda'; }
+        else if (pct <= 40) { cat = 'Moderate Disability'; bg = '#fff3cd'; }
+        else if (pct <= 60) { cat = 'Severe Disability'; bg = '#ffeeba'; }
+        else if (pct <= 80) { cat = 'Crippled'; bg = '#f8d7da'; }
+        else { cat = 'Bed-bound'; bg = '#f8d7da'; }
+        catEl.textContent = cat;
+        catEl.style.background = bg;
+        catEl.style.color = pct <= 20 ? '#155724' : (pct <= 40 ? '#856404' : '#721c24');
+        el.style.display = 'block';
+    }
+
+    function getVal(id) { return document.getElementById(id).value.trim(); }
+    function getRadio(name) {
+        var el = document.querySelector('input[name="' + name + '"]:checked');
+        return el ? el.value : '';
+    }
+    function getRadioMobile(name) {
+        var el = document.querySelector('input[name="' + name + 'm"]:checked');
+        return el ? el.value : '';
+    }
+
+    function calculateBMI() {
+        var h = parseFloat(document.getElementById('bmiHt').value);
+        var w = parseFloat(document.getElementById('bmiWt').value);
+        showBMI(h, w);
+    }
+
+    function autoCalcBMI() {
+        var h = parseFloat(document.getElementById('height').value);
+        var w = parseFloat(document.getElementById('weight').value);
+        if (h && w) {
+            document.getElementById('bmiHt').value = h;
+            document.getElementById('bmiWt').value = w;
+            showBMI(h, w);
+        }
+    }
+
+    function showBMI(h, w) {
+        var el = document.getElementById('bmiResult');
+        if (!h || !w || h <= 0 || w <= 0) { el.classList.remove('show'); return; }
+        var bmi = w / ((h / 100) * (h / 100));
+        var r = Math.round(bmi * 10) / 10;
+        var cat, cls;
+        if (bmi < 18.5) { cat = 'Underweight'; cls = 'underweight'; }
+        else if (bmi < 25) { cat = 'Normal Weight'; cls = 'normal'; }
+        else if (bmi < 30) { cat = 'Overweight'; cls = 'overweight'; }
+        else { cat = 'Obese'; cls = 'obese'; }
+        el.textContent = 'BMI: ' + r + ' (' + cat + ')';
+        el.className = 'bmi-result show ' + cls;
+    }
+
+    function getFormData() {
+        var h = parseFloat(getVal('height'));
+        var w = parseFloat(getVal('weight'));
+        var bmi = '', bmiCat = '';
+        if (h && w && h > 0) {
+            var v = w / ((h / 100) * (h / 100));
+            bmi = Math.round(v * 10) / 10;
+            if (v < 18.5) bmiCat = 'Underweight';
+            else if (v < 25) bmiCat = 'Normal';
+            else if (v < 30) bmiCat = 'Overweight';
+            else bmiCat = 'Obese';
+        }
+        var isMobile = window.innerWidth <= 640;
+        var total = 0, allD = true;
+        for (var i = 0; i < odiIds.length; i++) {
+            var s = getODIScore(odiIds[i]);
+            if (s < 0) allD = false; else total += s;
+        }
+        var pct = allD ? Math.round((total / 50) * 100) : -1;
+        var cat = '';
+        if (pct >= 0) {
+            if (pct <= 20) cat = 'Minimal Disability';
+            else if (pct <= 40) cat = 'Moderate Disability';
+            else if (pct <= 60) cat = 'Severe Disability';
+            else if (pct <= 80) cat = 'Crippled';
+            else cat = 'Bed-bound';
+        }
+        return {
+            'Timestamp': new Date().toLocaleString(),
+            'Email': getVal('email'), 'Name': getVal('name'), 'Age': getVal('age'),
+            'Gender': getRadio('gender'), 'Department / Program': getVal('department'),
+            'Academic Year': getVal('academicYear'), 'Height (cm)': getVal('height'),
+            'Weight (kg)': getVal('weight'), 'BMI': bmi, 'BMI Category': bmiCat,
+            'Marital Status': getRadio('marital'),
+            'B1. Do you experience low back pain?': isMobile ? getRadioMobile('b1') : getRadio('b1'),
+            'B2. Experienced low back pain during last 12 months?': isMobile ? getRadioMobile('b2') : getRadio('b2'),
+            'B3. Sit continuously for more than 4 hours daily?': isMobile ? getRadioMobile('b3') : getRadio('b3'),
+            'B4. Use laptops/mobile devices for prolonged periods?': isMobile ? getRadioMobile('b4') : getRadio('b4'),
+            'B5. Participate in regular physical activity/exercise?': isMobile ? getRadioMobile('b5') : getRadio('b5'),
+            'B6. Carry heavy backpacks regularly?': isMobile ? getRadioMobile('b6') : getRadio('b6'),
+            'B7. Feel stress related to academic workload?': isMobile ? getRadioMobile('b7') : getRadio('b7'),
+            'B8. Family history of low back pain?': isMobile ? getRadioMobile('b8') : getRadio('b8'),
+            'B9. Does low back pain affect academic performance?': isMobile ? getRadioMobile('b9') : getRadio('b9'),
+            'B10. Sought medical treatment for low back pain?': isMobile ? getRadioMobile('b10') : getRadio('b10'),
+            'C1. Duration of Low Back Pain': getVal('c1'), 'C2. Frequency of Pain': getVal('c2'),
+            'C3. Pain Severity': getVal('c3'), 'C4. Pain Radiation': getVal('c4'),
+            'D1. Pain Intensity': getVal('d1'), 'D2. Personal Care': getVal('d2'),
+            'D3. Lifting': getVal('d3'), 'D4. Walking': getVal('d4'), 'D5. Sitting': getVal('d5'),
+            'D6. Standing': getVal('d6'), 'D7. Sleeping': getVal('d7'), 'D8. Social Life': getVal('d8'),
+            'D9. Traveling': getVal('d9'), 'D10. Employment / Homemaking': getVal('d10'),
+            'ODI Total Score': total, 'ODI Percentage': pct >= 0 ? pct + '%' : '',
+            'ODI Calculated Category': cat, 'ODI Interpretation (selected)': getVal('odiInterpretation')
+        };
+    }
+
+    function validate() {
+        var req = ['email','name','age','department','academicYear','height','weight','c1','c2','c3','c4',
+            'd1','d2','d3','d4','d5','d6','d7','d8','d9','d10','odiInterpretation'];
+        for (var i = 0; i < req.length; i++) {
+            if (!getVal(req[i])) { alert('Please fill in all required fields.'); return false; }
+        }
+        var radios = ['gender','marital'];
+        for (var i = 0; i < radios.length; i++) {
+            if (!getRadio(radios[i])) { alert('Please answer all required questions.'); return false; }
+        }
+        var isMobile = window.innerWidth <= 640;
+        var bRadios = ['b1','b2','b3','b4','b5','b6','b7','b8','b9','b10'];
+        for (var i = 0; i < bRadios.length; i++) {
+            var val = isMobile ? getRadioMobile(bRadios[i]) : getRadio(bRadios[i]);
+            if (!val) { alert('Please answer all questions in Section B.'); return false; }
+        }
+        return true;
+    }
+
+    function submitForm() {
+        if (!validate()) return;
+        var data = getFormData();
+        var stored = JSON.parse(localStorage.getItem('surveyData') || '[]');
+        stored.push(data);
+        localStorage.setItem('surveyData', JSON.stringify(stored));
+        document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], select').forEach(function(el) { el.value = ''; });
+        document.querySelectorAll('input[type="radio"]').forEach(function(el) { el.checked = false; });
+        document.getElementById('bmiResult').classList.remove('show');
+        document.getElementById('odiResult').style.display = 'none';
+        var msg = document.getElementById('successMsg');
+        msg.classList.add('show');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(function() { msg.classList.remove('show'); }, 4000);
+    }
+
+    // Admin functions
+    function toggleAdmin() {
+        if (isAdmin) { logoutAdmin(); return; }
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('pwdInput').value = '';
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('pwdInput').focus();
+    }
+
+    function adminLogin() {
+        var pwd = document.getElementById('pwdInput').value;
+        if (pwd === ADMIN_PWD) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            isAdmin = true;
+            document.getElementById('studentView').style.display = 'none';
+            document.getElementById('adminView').style.display = 'block';
+            document.getElementById('adminToggle').innerHTML = '&#10006;';
+            refreshAdmin();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    }
+
+    function logoutAdmin() {
+        isAdmin = false;
+        document.getElementById('studentView').style.display = 'block';
+        document.getElementById('adminView').style.display = 'none';
+        document.getElementById('adminToggle').innerHTML = '&#9881;';
+        Object.keys(chartInstances).forEach(function(k) { if (chartInstances[k]) chartInstances[k].destroy(); });
+        chartInstances = {};
+    }
+
+    function refreshAdmin() {
+        var stored = JSON.parse(localStorage.getItem('surveyData') || '[]');
+        document.getElementById('subCount').textContent = stored.length;
+        renderCharts(stored);
+        renderTable(stored);
+    }
+
+    function renderTable(data) {
+        var html = '<table class="grid-table" style="min-width:800px;"><thead><tr>';
+        if (data.length) {
+            var keys = Object.keys(data[0]);
+            for (var i = 0; i < keys.length; i++) html += '<th>' + keys[i] + '</th>';
+            html += '</tr></thead><tbody>';
+            for (var r = 0; r < data.length; r++) {
+                html += '<tr>';
+                for (var c = 0; c < keys.length; c++) {
+                    html += '<td style="font-size:12px;padding:6px 8px;max-width:200px;word-break:break-word;">' + (data[r][keys[c]] || '') + '</td>';
+                }
+                html += '</tr>';
+            }
+        } else {
+            html += '<th>No data</th></tr></thead><tbody><tr><td>No submissions yet.</td></tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('responsesTable').innerHTML = html;
+    }
+
+    function renderCharts(data) {
+        var labels, values, colors;
+
+        // BMI Distribution
+        var bmiCounts = { Underweight: 0, Normal: 0, Overweight: 0, Obese: 0 };
+        data.forEach(function(d) {
+            if (bmiCounts.hasOwnProperty(d['BMI Category'])) bmiCounts[d['BMI Category']]++;
+        });
+        if (chartInstances.bmi) chartInstances.bmi.destroy();
+        chartInstances.bmi = new Chart(document.getElementById('chartBMI'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(bmiCounts),
+                datasets: [{ data: Object.values(bmiCounts), backgroundColor: ['#fff3cd','#d4edda','#ffeeba','#f8d7da'] }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+        });
+
+        // ODI Interpretation
+        var odiCounts = {};
+        data.forEach(function(d) {
+            var v = d['ODI Interpretation (selected)'] || 'Not selected';
+            odiCounts[v] = (odiCounts[v] || 0) + 1;
+        });
+        labels = Object.keys(odiCounts);
+        values = Object.values(odiCounts);
+        if (labels.length === 0) { labels = ['No data']; values = [1]; }
+        if (chartInstances.odi) chartInstances.odi.destroy();
+        chartInstances.odi = new Chart(document.getElementById('chartODI'), {
+            type: 'doughnut',
+            data: { labels: labels, datasets: [{ data: values, backgroundColor: ['#d4edda','#fff3cd','#ffeeba','#f8d7da','#f8d7da','#e0e0e0'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+        });
+
+        // Gender Distribution
+        var genderCounts = { Male: 0, Female: 0, Other: 0 };
+        data.forEach(function(d) {
+            if (genderCounts.hasOwnProperty(d['Gender'])) genderCounts[d['Gender']]++;
+        });
+        if (chartInstances.gender) chartInstances.gender.destroy();
+        chartInstances.gender = new Chart(document.getElementById('chartGender'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(genderCounts),
+                datasets: [{ data: Object.values(genderCounts), backgroundColor: ['#42a5f5','#ec407a','#bdbdbd'] }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+        });
+
+        // Low Back Pain Prevalence (B1)
+        var lbpCounts = { Yes: 0, No: 0 };
+        data.forEach(function(d) {
+            var v = d['B1. Do you experience low back pain?'];
+            if (v === 'Yes') lbpCounts.Yes++;
+            else if (v === 'No') lbpCounts.No++;
+        });
+        if (chartInstances.lbp) chartInstances.lbp.destroy();
+        chartInstances.lbp = new Chart(document.getElementById('chartLBP'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(lbpCounts),
+                datasets: [{ data: Object.values(lbpCounts), backgroundColor: ['#ef5350','#66bb6a'] }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+        });
+    }
+
+    function downloadExcel() {
+        var stored = JSON.parse(localStorage.getItem('surveyData') || '[]');
+        if (!stored.length) { alert('No submissions yet.'); return; }
+        var ws = XLSX.utils.json_to_sheet(stored);
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Responses');
+        XLSX.writeFile(wb, 'Survey_Responses.xlsx');
+    }
+
+    function clearAllData() {
+        if (!confirm('Delete all submission data? This cannot be undone.')) return;
+        localStorage.removeItem('surveyData');
+        refreshAdmin();
+    }
+
+    (function init() {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('adminView').style.display = 'none';
+        document.getElementById('studentView').style.display = 'block';
+    })();
+</script>
+</body>
+</html>
