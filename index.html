@@ -425,7 +425,7 @@
                 <div class="info-box">Please select <strong>ONE</strong> statement in each section that best describes your condition today.</div>
 
                 <div class="form-group"><label>D1. Pain Intensity <span class="required">*</span></label>
-                    <select id="d1" required onchange="calcODI()">
+                    <select id="d1" required>
                         <option value="">-- Select --</option>
                         <option value="I have no pain at the moment.">I have no pain at the moment.</option>
                         <option value="The pain is very mild at the moment.">The pain is very mild at the moment.</option>
@@ -436,7 +436,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label>D2. Personal Care <span class="required">*</span></label>
-                    <select id="d2" required onchange="calcODI()">
+                    <select id="d2" required>
                         <option value="">-- Select --</option>
                         <option value="I can look after myself normally without causing extra pain.">I can look after myself normally without causing extra pain.</option>
                         <option value="I can look after myself normally, but it causes extra pain.">I can look after myself normally, but it causes extra pain.</option>
@@ -447,7 +447,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label>D3. Lifting <span class="required">*</span></label>
-                    <select id="d3" required onchange="calcODI()">
+                    <select id="d3" required>
                         <option value="">-- Select --</option>
                         <option value="I can lift heavy weights without extra pain.">I can lift heavy weights without extra pain.</option>
                         <option value="I can lift heavy weights but it causes extra pain.">I can lift heavy weights but it causes extra pain.</option>
@@ -457,7 +457,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label>D4. Walking <span class="required">*</span></label>
-                    <select id="d4" required onchange="calcODI()">
+                    <select id="d4" required>
                         <option value="">-- Select --</option>
                         <option value="Pain does not prevent me from walking any distance.">Pain does not prevent me from walking any distance.</option>
                         <option value="Pain prevents me from walking more than 1 mile.">Pain prevents me from walking more than 1 mile.</option>
@@ -468,7 +468,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label>D5. Sitting <span class="required">*</span></label>
-                    <select id="d5" required onchange="calcODI()">
+                    <select id="d5" required>
                         <option value="">-- Select --</option>
                         <option value="I can sit in any chair as long as I like.">I can sit in any chair as long as I like.</option>
                         <option value="I can only sit in my favorite chair as long as I like.">I can only sit in my favorite chair as long as I like.</option>
@@ -479,7 +479,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label>D6. Standing <span class="required">*</span></label>
-                    <select id="d6" required onchange="calcODI()">
+                    <select id="d6" required>
                         <option value="">-- Select --</option>
                         <option value="I can stand as long as I want without pain.">I can stand as long as I want without pain.</option>
                         <option value="I can stand as long as I want, but it causes extra pain.">I can stand as long as I want, but it causes extra pain.</option>
@@ -490,7 +490,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label>D7. Sleeping <span class="required">*</span></label>
-                    <select id="d7" required onchange="calcODI()">
+                    <select id="d7" required>
                         <option value="">-- Select --</option>
                         <option value="My sleep is never disturbed by pain.">My sleep is never disturbed by pain.</option>
                         <option value="My sleep is occasionally disturbed by pain.">My sleep is occasionally disturbed by pain.</option>
@@ -501,7 +501,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label>D8. Social Life <span class="required">*</span></label>
-                    <select id="d8" required onchange="calcODI()">
+                    <select id="d8" required>
                         <option value="">-- Select --</option>
                         <option value="My social life is normal and does not increase my pain.">My social life is normal and does not increase my pain.</option>
                         <option value="My social life is normal, but it increases my pain.">My social life is normal, but it increases my pain.</option>
@@ -512,7 +512,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label>D9. Traveling <span class="required">*</span></label>
-                    <select id="d9" required onchange="calcODI()">
+                    <select id="d9" required>
                         <option value="">-- Select --</option>
                         <option value="I can travel anywhere without pain.">I can travel anywhere without pain.</option>
                         <option value="I can travel anywhere, but it causes extra pain.">I can travel anywhere, but it causes extra pain.</option>
@@ -523,7 +523,7 @@
                     </select>
                 </div>
                 <div class="form-group"><label>D10. Employment / Homemaking <span class="required">*</span></label>
-                    <select id="d10" required onchange="calcODI()">
+                    <select id="d10" required>
                         <option value="">-- Select --</option>
                         <option value="My normal work/homemaking does not cause pain.">My normal work/homemaking does not cause pain.</option>
                         <option value="My normal work/homemaking causes extra pain, but I can do it.">My normal work/homemaking causes extra pain, but I can do it.</option>
@@ -534,11 +534,6 @@
                     </select>
                 </div>
 
-                <div id="odiResult" style="display:none;margin-top:14px;padding:14px;background:#e8eaf6;border-radius:8px;text-align:center;">
-                    <div style="font-size:13px;color:#555;font-weight:600;">Oswestry Disability Index (ODI) Score</div>
-                    <div style="font-size:28px;font-weight:700;color:#1a237e;margin:4px 0;" id="odiScore">0%</div>
-                    <div style="font-size:15px;font-weight:600;padding:6px 12px;border-radius:16px;display:inline-block;" id="odiCategory">—</div>
-                </div>
             </div>
 
             <!-- SECTION E -->
@@ -645,30 +640,6 @@
         var el = document.getElementById(id);
         if (!el.value) return -1;
         return el.selectedIndex - 1;
-    }
-
-    function calcODI() {
-        var total = 0, answered = 0;
-        for (var i = 0; i < odiIds.length; i++) {
-            var s = getODIScore(odiIds[i]);
-            if (s >= 0) { total += s; answered++; }
-        }
-        var el = document.getElementById('odiResult');
-        var scoreEl = document.getElementById('odiScore');
-        var catEl = document.getElementById('odiCategory');
-        if (answered < 10) { el.style.display = 'none'; return; }
-        var pct = Math.round((total / 50) * 100);
-        scoreEl.textContent = total + '/50 (' + pct + '%)';
-        var cat, bg;
-        if (pct <= 20) { cat = 'Minimal Disability'; bg = '#d4edda'; }
-        else if (pct <= 40) { cat = 'Moderate Disability'; bg = '#fff3cd'; }
-        else if (pct <= 60) { cat = 'Severe Disability'; bg = '#ffeeba'; }
-        else if (pct <= 80) { cat = 'Crippled'; bg = '#f8d7da'; }
-        else { cat = 'Bed-bound'; bg = '#f8d7da'; }
-        catEl.textContent = cat;
-        catEl.style.background = bg;
-        catEl.style.color = pct <= 20 ? '#155724' : (pct <= 40 ? '#856404' : '#721c24');
-        el.style.display = 'block';
     }
 
     function getVal(id) { return document.getElementById(id).value.trim(); }
@@ -794,7 +765,6 @@
         document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], select').forEach(function(el) { el.value = ''; });
         document.querySelectorAll('input[type="radio"]').forEach(function(el) { el.checked = false; });
         document.getElementById('bmiResult').classList.remove('show');
-        document.getElementById('odiResult').style.display = 'none';
         var msg = document.getElementById('successMsg');
         msg.classList.add('show');
         window.scrollTo({ top: 0, behavior: 'smooth' });
